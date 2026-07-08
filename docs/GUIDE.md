@@ -311,10 +311,21 @@ over the input image showing **which regions most influenced the decision** — 
 
 Technically it uses the **gradients** flowing into the last convolutional layer to
 weigh that layer's feature maps, giving a coarse "importance" map that's upscaled and
-overlaid on the image. The library `grad-cam` (already in `requirements.txt`) does
-this in a few lines. It's listed as a TODO to wire into the web app's result view —
-a saliency overlay next to the probability bars would make the POC much more
-convincing clinically.
+overlaid on the image (for ViT there's no conv layer, so we reshape the final
+transformer tokens back into a grid instead).
+
+**This is now implemented** (`src/occuwise/explain.py`):
+- In the web app, tick **"Show Grad-CAM heatmap"** on the Analyze page — the heatmap
+  appears under the probability bars.
+- From the CLI, add `--explain` to save an overlay per image into `outputs/gradcam/`:
+  ```bash
+  py -m occuwise.predict --dataset aptos --arch resnet50 --samples --explain
+  ```
+
+Try it on an *untrained* demo model and you'll often see the heat land on the black
+border or corners rather than the retina — a vivid demonstration of *why* Grad-CAM
+matters: it exposes a model that isn't yet looking at real pathology. After training,
+the heat should move onto vessels and lesions.
 
 ---
 

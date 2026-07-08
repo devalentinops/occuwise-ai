@@ -83,8 +83,11 @@ occuwise-ai/
 │   │   ├── metrics.py         #   task-appropriate torchmetrics collections
 │   │   ├── lit_classifier.py  #   LitClassifier LightningModule
 │   │   └── lit_segmenter.py   #   LitSegmenter LightningModule
+│   ├── predictor.py           #   in-process PyTorch predictor (shared by CLI + web app)
+│   ├── explain.py             #   Grad-CAM saliency (last-conv for CNNs, tokens for ViT)
 │   ├── train.py               # Hydra entrypoint: fit + test + log
 │   ├── evaluate.py            # evaluate a checkpoint on a test split
+│   ├── predict.py             # CLI inference: --image / --dir / --samples (+ --explain)
 │   ├── compare.py             # build the leaderboard across all MLflow runs
 │   ├── export.py              # checkpoint → ONNX/TorchScript + model_card.json
 │   └── cli.py                 # `occuwise <cmd>` console entrypoint
@@ -92,7 +95,7 @@ occuwise-ai/
 ├── serving/                   # inference — production API + POC web app
 │   ├── inference.py           #   ONNX predictor + exact training preprocessing (production)
 │   ├── app.py                 #   FastAPI JSON service on the exported ONNX model (production)
-│   ├── poc_predictor.py       #   in-process PyTorch predictor (no ONNX/training needed)
+│   ├── poc_predictor.py       #   re-exports occuwise.predictor (shared by CLI + web app)
 │   ├── webapp.py              #   POC web app: /prepare + / (upload→analyze→display)
 │   ├── web/                   #   self-contained HTML pages (predict.html, prepare.html)
 │   ├── Dockerfile             #   slim CPU image (GPU variant documented inside)
@@ -232,7 +235,8 @@ it, set it as a dataset's `primary_metric` in the registry.
 ---
 
 ## 8. Known gaps / TODO (good first tasks)
-- Wire **Grad-CAM** into the FastAPI response (return a saliency overlay).
+- ~~Wire **Grad-CAM** into the FastAPI response~~ ✅ done — `src/occuwise/explain.py`;
+  toggle in the web app, `--explain` on the CLI. Extend to segmentation (Seg-Grad-CAM).
 - Add **temperature-scaling calibration** as a post-fit step in `train.py`.
 - Add **Optuna** Hydra sweeper config for HPO (the train entrypoint already
   returns the monitored metric for the sweeper to optimise).

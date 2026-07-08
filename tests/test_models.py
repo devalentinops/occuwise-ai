@@ -22,6 +22,20 @@ def test_classifier_forward(arch):
     assert out.shape == (2, 5)
 
 
+def test_gradcam_overlay():
+    pytest.importorskip("pytorch_grad_cam")
+    import numpy as np
+
+    from occuwise.explain import gradcam_overlay
+
+    model = build_model(ModelConfig(task="classification", arch="resnet18",
+                                    num_classes=5, pretrained=False)).eval()
+    base = np.random.rand(128, 128, 3).astype("float32")
+    overlay = gradcam_overlay(model, torch.randn(1, 3, 128, 128), 2, base, "resnet18")
+    assert overlay is not None and overlay.shape == (128, 128, 3)
+    assert overlay.dtype == np.uint8
+
+
 @pytest.mark.parametrize("decoder", ["unet", "unetpp", "fpn"])
 def test_segmenter_forward(decoder):
     smp = pytest.importorskip("segmentation_models_pytorch")  # noqa: F841

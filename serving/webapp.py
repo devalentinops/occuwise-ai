@@ -104,23 +104,24 @@ def prepare(payload: dict):
     return {"status": "ready", "model": predictor.summary()}
 
 
-def _run(model_key: str, image: np.ndarray, filename: str) -> dict:
+def _run(model_key: str, image: np.ndarray, filename: str, explain: bool = False) -> dict:
     if model_key not in REGISTRY:
         raise HTTPException(404, f"Model '{model_key}' is not prepared. Prepare it first.")
-    result = REGISTRY[model_key].predict(image)
+    result = REGISTRY[model_key].predict(image, explain=explain)
     result["filename"] = filename
     result["disclaimer"] = "Decision support only — not a diagnosis. Clinician review required."
     return result
 
 
 @app.post("/api/predict")
-async def predict(file: UploadFile = File(...), model_key: str = Form(...)):
+async def predict(file: UploadFile = File(...), model_key: str = Form(...),
+                  explain: bool = Form(False)):
     raw = await file.read()
     try:
         image = np.array(Image.open(io.BytesIO(raw)).convert("RGB"))
     except Exception as e:  # noqa: BLE001
         raise HTTPException(400, f"Could not decode image: {e}") from e
-    return _run(model_key, image, file.filename)
+    return _run(model_key, image, file.filename, explain)
 
 
 @app.get("/api/samples")
@@ -141,7 +142,7 @@ def predict_sample(payload: dict):
     if not str(target).startswith(str(SAMPLES_DIR.resolve())) or not target.exists():
         raise HTTPException(404, f"Sample not found: {rel}")
     image = np.array(Image.open(target).convert("RGB"))
-    return _run(model_key, image, target.name)
+    return _run(model_key, image, target.name, bool(payload.get("explain", False)))
 
 
 @app.post("/api/run-tests")

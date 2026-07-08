@@ -53,7 +53,12 @@ They appear as a clickable gallery in the web app, and the CLI can run them dire
 py -m occuwise.predict --dataset aptos --arch resnet50 --samples          # all fundus samples
 py -m occuwise.predict --dataset oct2017 --arch densenet121 --samples     # all OCT samples
 py -m occuwise.predict --dataset aptos --arch resnet50 --image path/to/one.jpg
+py -m occuwise.predict --dataset aptos --arch resnet50 --samples --explain    # + Grad-CAM heatmaps
 ```
+
+**Grad-CAM explainability** is built in: tick *"Show Grad-CAM heatmap"* in the web app,
+or add `--explain` on the CLI, to see a heatmap of where the model looked (red = most
+influential). Essential for checking the model attends to real pathology, not artifacts.
 
 ## POC web app (upload → analyze → result)
 

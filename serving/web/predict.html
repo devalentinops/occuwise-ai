@@ -97,7 +97,12 @@
       </div>
       <input type="file" id="file" accept="image/*" style="display:none">
 
-      <div style="margin-top:16px;display:flex;gap:10px">
+      <label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer">
+        <input type="checkbox" id="explain" checked style="width:auto">
+        <span>Show Grad-CAM heatmap (where the model looked)</span>
+      </label>
+
+      <div style="margin-top:12px;display:flex;gap:10px">
         <button id="run" disabled>Analyze image</button>
         <button class="secondary" id="clear">Clear</button>
       </div>
@@ -157,6 +162,7 @@ $('#run').onclick=async()=>{
   if(!selectedFile) return;
   $('#result').innerHTML='<div class="result-empty"><span class="spinner"></span> Running inference…</div>';
   const fd=new FormData(); fd.append('file',selectedFile); fd.append('model_key',$('#model').value);
+  fd.append('explain',$('#explain').checked);
   const r=await fetch('/api/predict',{method:'POST',body:fd});
   if(!r.ok){ const e=await r.json(); $('#result').innerHTML=`<div class="banner">${e.detail||'Error'}</div>`; return; }
   render(await r.json());
@@ -183,7 +189,7 @@ async function runSample(s){
   $('#dropText').style.display='none'; selectedFile=null;
   $('#result').innerHTML='<div class="result-empty"><span class="spinner"></span> Running inference…</div>';
   const r=await fetch('/api/predict_sample',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({model_key:key,path:s.path})});
+    body:JSON.stringify({model_key:key,path:s.path,explain:$('#explain').checked})});
   if(!r.ok){ const e=await r.json(); $('#result').innerHTML=`<div class="banner">${e.detail||'Error'}</div>`; return; }
   render(await r.json());
 }
@@ -199,6 +205,14 @@ function render(d){
           <span>${(p.prob*100).toFixed(1)}%</span></div>
           <div class="track"><div class="fill" style="width:${(p.prob*100).toFixed(1)}%"></div></div></div>`;
     });
+    if('saliency_png' in d){
+      if(d.saliency_png)
+        h+=`<div style="margin-top:16px"><div class="row" style="font-size:13px;color:var(--muted);margin-bottom:6px">
+            Grad-CAM — red = most influential for “${d.predicted_class}”</div>
+            <img src="${d.saliency_png}" style="max-width:100%;border-radius:10px"></div>`;
+      else
+        h+=`<div style="font-size:12px;color:var(--muted);margin-top:12px">Grad-CAM unavailable for this model.</div>`;
+    }
   } else {
     h+=`<div class="verdict"><span class="cls">Segmentation</span>${demo}</div>`;
     if(d.overlay_png) h+=`<img src="${d.overlay_png}" style="max-width:100%;border-radius:10px;margin:8px 0">`;

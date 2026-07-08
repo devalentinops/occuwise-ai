@@ -22,7 +22,7 @@ import torch.nn.functional as F
 from PIL import Image
 
 from occuwise.data.registry import DatasetSpec, get_spec
-from occuwise.data.transforms import build_transforms
+from occuwise.data.transforms import IMAGENET_MEAN, IMAGENET_STD, build_transforms
 from occuwise.models import ModelConfig, build_model
 
 # Distinct colours for segmentation class overlays (RGB).
@@ -30,6 +30,12 @@ _SEG_COLOURS = np.array(
     [[0, 0, 0], [255, 64, 64], [64, 160, 255], [64, 255, 128], [255, 200, 0]],
     dtype=np.uint8,
 )
+
+
+def _png_data_uri(rgb_uint8: np.ndarray) -> str:
+    buf = io.BytesIO()
+    Image.fromarray(rgb_uint8).save(buf, format="PNG")
+    return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
 
 
 def _input_size(arch: str, spec: DatasetSpec) -> int:
@@ -73,18 +79,26 @@ class InProcessPredictor:
         x = self.transform(image=image_rgb)["image"]
         return x.unsqueeze(0).to(self.device)
 
-    @torch.no_grad()
-    def predict(self, image_rgb: np.ndarray) -> dict:
+    def predict(self, image_rgb: np.ndarray, explain: bool = False) -> dict:
         x = self._tensor(image_rgb)
         if self.spec.task == "classification":
-            return self._predict_classification(x)
-        return self._predict_segmentation(x, image_rgb)
+            return self._predict_classification(x, explain)
+        with torch.no_grad():
+            return self._predict_segmentation(x, image_rgb)
 
-    def _predict_classification(self, x: torch.Tensor) -> dict:
-        probs = F.softmax(self.model(x), dim=1)[0].cpu().numpy()
+    def _denorm(self, x: torch.Tensor) -> np.ndarray:
+        """Recover the [0,1] RGB image the model actually saw (for CAM overlay)."""
+        mean = torch.tensor(IMAGENET_MEAN).view(1, 3, 1, 1)
+        std = torch.tensor(IMAGENET_STD).view(1, 3, 1, 1)
+        img = (x.detach().cpu() * std + mean).clamp(0, 1)[0].permute(1, 2, 0).numpy()
+        return img
+
+    def _predict_classification(self, x: torch.Tensor, explain: bool = False) -> dict:
+        with torch.no_grad():
+            probs = F.softmax(self.model(x), dim=1)[0].cpu().numpy()
         order = np.argsort(probs)[::-1]
         idx = int(order[0])
-        return {
+        result = {
             "task": "classification",
             "dataset": self.spec.name,
             "modality": self.spec.modality,
@@ -97,6 +111,12 @@ class InProcessPredictor:
                 {"class": self.spec.class_names[i], "prob": float(probs[i])} for i in order
             ],
         }
+        if explain:
+            from .explain import gradcam_overlay
+
+            overlay = gradcam_overlay(self.model, x, idx, self._denorm(x), self.arch)
+            result["saliency_png"] = _png_data_uri(overlay) if overlay is not None else None
+        return result
 
     def _predict_segmentation(self, x: torch.Tensor, image_rgb: np.ndarray) -> dict:
         logits = self.model(x)
@@ -129,9 +149,7 @@ class InProcessPredictor:
         colour = _SEG_COLOURS[np.clip(mask, 0, len(_SEG_COLOURS) - 1)].astype(np.float32)
         alpha = (mask > 0)[..., None] * 0.45
         blended = (base * (1 - alpha) + colour * alpha).astype(np.uint8)
-        buf = io.BytesIO()
-        Image.fromarray(blended).save(buf, format="PNG")
-        return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
+        return _png_data_uri(blended)
 
     def summary(self) -> dict:
         return {

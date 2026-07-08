@@ -18,6 +18,7 @@ With real trained weights:
 from __future__ import annotations
 
 import argparse
+import base64
 import json
 from pathlib import Path
 
@@ -71,6 +72,8 @@ def main():
     src.add_argument("--dir", help="folder of images")
     src.add_argument("--samples", action="store_true", help="bundled samples matching the modality")
     ap.add_argument("--json", action="store_true", help="emit raw JSON instead of a table")
+    ap.add_argument("--explain", action="store_true",
+                    help="save a Grad-CAM heatmap per image to outputs/gradcam/")
     args = ap.parse_args()
 
     spec = get_spec(args.dataset)
@@ -82,13 +85,24 @@ def main():
           f"({'trained' if args.ckpt else 'UNTRAINED demo'})...")
     predictor = InProcessPredictor(args.dataset, args.arch, args.ckpt)
 
+    cam_dir = Path("outputs/gradcam")
+    if args.explain:
+        cam_dir.mkdir(parents=True, exist_ok=True)
+
     results = []
     for p in paths:
-        res = predictor.predict(_load_rgb(p))
+        res = predictor.predict(_load_rgb(p), explain=args.explain)
         res["image"] = str(p)
+        cam_note = ""
+        if args.explain and res.get("saliency_png"):
+            out = cam_dir / f"{p.stem}__{args.dataset}__{args.arch}.png"
+            out.write_bytes(base64.b64decode(res["saliency_png"].split(",", 1)[1]))
+            res["saliency_path"] = str(out)
+            res.pop("saliency_png", None)  # keep JSON output compact
+            cam_note = f"  -> {out}"
         results.append(res)
         if not args.json:
-            print(f"  {p.name:<52} {_format(res)}")
+            print(f"  {p.name:<52} {_format(res)}{cam_note}")
 
     if args.json:
         print(json.dumps(results, indent=2))
