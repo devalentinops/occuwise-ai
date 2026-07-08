@@ -1,0 +1,3 @@
+# Vision Transformer base/16. Needs 224px input and more data/epochs to shine.
+arch: vit_base
+pretrained: true

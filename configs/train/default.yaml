@@ -1,0 +1,15 @@
+# Training hyperparameters (shared across models/datasets; override per-experiment).
+batch_size: 16
+num_workers: 4
+max_epochs: 50
+patience: 8              # early-stopping patience on the val primary metric
+lr: 3e-4
+weight_decay: 1e-4
+loss: ce                 # "ce" | "focal" (classification only)
+balance_classes: true    # weighted sampler for imbalanced classification
+gradient_clip_val: 1.0
+
+# Hardware
+accelerator: auto        # "gpu" | "cpu" | "auto"
+devices: auto            # int, list, or "auto"
+precision: 16-mixed      # "16-mixed" | "bf16-mixed" | "32-true"

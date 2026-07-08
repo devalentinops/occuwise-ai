@@ -1,0 +1,10 @@
+# @package _global_
+# OCT2017 4-class disease classification with DenseNet-121.
+defaults:
+  - override /model: densenet121
+  - override /data: oct2017
+  - override /train: default
+
+train:
+  max_epochs: 40
+  batch_size: 32

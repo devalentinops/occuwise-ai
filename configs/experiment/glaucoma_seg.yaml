@@ -1,0 +1,14 @@
+# @package _global_
+# Optic disc/cup segmentation on REFUGE with a U-Net (ResNet-34 encoder).
+defaults:
+  - override /model: unet
+  - override /data: refuge_seg
+  - override /train: default
+
+model:
+  arch: resnet34
+  decoder: unet
+train:
+  max_epochs: 80
+  batch_size: 8
+  balance_classes: false

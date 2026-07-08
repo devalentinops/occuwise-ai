@@ -1,0 +1,3 @@
+# DenseNet-121 — classic CheXNet-style medical imaging backbone.
+arch: densenet121
+pretrained: true

@@ -1,0 +1,2 @@
+arch: efficientnet_b0
+pretrained: true

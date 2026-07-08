@@ -1,0 +1,11 @@
+# @package _global_
+# Diabetic-retinopathy baseline: EfficientNet-B4 on APTOS with focal loss.
+defaults:
+  - override /model: efficientnet_b4
+  - override /data: aptos
+  - override /train: default
+
+train:
+  loss: focal
+  max_epochs: 60
+  batch_size: 12

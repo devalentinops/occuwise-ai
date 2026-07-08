@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Occuwise · Prepare & Test</title>
+<style>
+  :root{
+    --bg:#0f1720;--panel:#182430;--panel2:#1f2e3d;--line:#2c3e50;
+    --text:#e8eef5;--muted:#93a4b8;--accent:#38bdf8;--accent2:#22c55e;
+    --warn:#f59e0b;--danger:#ef4444;--radius:14px;
+  }
+  @media (prefers-color-scheme: light){
+    :root{--bg:#f4f7fb;--panel:#fff;--panel2:#eef3f9;--line:#dbe4ee;
+      --text:#12202e;--muted:#5b6b7c;}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.5}
+  header{display:flex;align-items:center;gap:16px;padding:16px 24px;
+    border-bottom:1px solid var(--line);background:var(--panel)}
+  header .logo{font-weight:700;font-size:18px}
+  header .logo span{color:var(--accent)}
+  nav{margin-left:auto;display:flex;gap:8px}
+  nav a{color:var(--muted);text-decoration:none;padding:8px 14px;border-radius:10px;font-size:14px}
+  nav a.active{background:var(--panel2);color:var(--text)}
+  .wrap{max-width:1000px;margin:0 auto;padding:24px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media (max-width:800px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
+  h2{margin:0 0 4px;font-size:16px}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:14px}
+  label{display:block;font-size:13px;color:var(--muted);margin:12px 0 6px}
+  select,input[type=text]{width:100%;padding:10px 12px;background:var(--panel2);
+    border:1px solid var(--line);border-radius:10px;color:var(--text);font-size:14px}
+  button{cursor:pointer;border:0;border-radius:10px;padding:11px 18px;font-size:14px;
+    font-weight:600;background:var(--accent);color:#04222e}
+  button.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  .status{margin-top:14px;font-size:13px;padding:10px 14px;border-radius:10px;display:none}
+  .status.ok{display:block;background:color-mix(in srgb,var(--accent2) 15%,transparent);border:1px solid var(--accent2)}
+  .status.err{display:block;background:color-mix(in srgb,var(--danger) 15%,transparent);border:1px solid var(--danger)}
+  .status.info{display:block;background:var(--panel2);border:1px solid var(--line);color:var(--muted)}
+  .model-row{display:flex;justify-content:space-between;align-items:center;
+    padding:10px 12px;background:var(--panel2);border-radius:10px;margin-top:8px;font-size:13px}
+  .pill{font-size:11px;padding:2px 8px;border-radius:20px;background:var(--bg);color:var(--muted);margin-left:6px}
+  .pill.demo{color:var(--warn)}
+  .pill.trained{color:var(--accent2)}
+  pre{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;
+    font-size:12px;overflow:auto;max-height:320px;white-space:pre-wrap}
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--line);
+    border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">Occu<span>wise</span> AI</div>
+  <nav>
+    <a href="/">Analyze</a>
+    <a href="/prepare" class="active">Prepare &amp; Test</a>
+  </nav>
+</header>
+
+<div class="wrap">
+  <div class="grid">
+    <!-- Prepare -->
+    <div class="card">
+      <h2>Prepare a model</h2>
+      <div class="sub">Loads an ImageNet-pretrained backbone sized to the dataset's
+        clinical classes. Add a checkpoint path to serve trained weights.</div>
+
+      <label for="dataset">Dataset / task</label>
+      <select id="dataset"></select>
+      <div class="sub" id="dsDesc" style="margin-top:6px"></div>
+
+      <label for="arch">Architecture</label>
+      <select id="arch"></select>
+
+      <label for="ckpt">Checkpoint path (optional — leave blank for demo mode)</label>
+      <input type="text" id="ckpt" placeholder="outputs/aptos/efficientnet_b4/best.ckpt">
+
+      <div style="margin-top:16px">
+        <button id="prep">Prepare model</button>
+      </div>
+      <div class="status" id="prepStatus"></div>
+    </div>
+
+    <!-- Prepared models + tests -->
+    <div class="card">
+      <h2>Ready models</h2>
+      <div class="sub">Available on the <a href="/" style="color:var(--accent)">Analyze</a> page.</div>
+      <div id="models"><div class="sub">None prepared yet.</div></div>
+
+      <h2 style="margin-top:22px">Smoke tests</h2>
+      <div class="sub">Verifies every architecture builds and data loads (offline, CPU).</div>
+      <button class="secondary" id="test">Run tests</button>
+      <div class="status" id="testStatus"></div>
+      <pre id="testOut" style="display:none"></pre>
+    </div>
+  </div>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+let OPTIONS={datasets:[]};
+
+async function loadOptions(){
+  OPTIONS=await (await fetch('/api/options')).json();
+  const ds=$('#dataset'); ds.innerHTML='';
+  OPTIONS.datasets.forEach(d=>{
+    const o=document.createElement('option'); o.value=d.name;
+    o.textContent=`${d.name} — ${d.task} (${d.modality})`; ds.appendChild(o);
+  });
+  ds.onchange=onDataset; onDataset();
+  loadModels();
+}
+function onDataset(){
+  const d=OPTIONS.datasets.find(x=>x.name===$('#dataset').value);
+  $('#dsDesc').textContent=`${d.description}  ·  classes: ${d.class_names.join(', ')}`;
+  const a=$('#arch'); a.innerHTML='';
+  d.archs.forEach(x=>{const o=document.createElement('option');o.value=x;o.textContent=x;a.appendChild(o);});
+}
+
+$('#prep').onclick=async()=>{
+  const btn=$('#prep'), st=$('#prepStatus'); btn.disabled=true;
+  st.className='status info'; st.innerHTML='<span class="spinner"></span> Preparing (may download pretrained weights)…';
+  const body={dataset:$('#dataset').value,arch:$('#arch').value,checkpoint:$('#ckpt').value.trim()};
+  try{
+    const r=await fetch('/api/prepare',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const j=await r.json();
+    if(!r.ok) throw new Error(j.detail||'Failed');
+    st.className='status ok'; st.textContent=`✓ Ready: ${j.model.key} (${j.model.trained?'trained':'demo'}, ${j.model.device})`;
+    loadModels();
+  }catch(e){ st.className='status err'; st.textContent='✗ '+e.message; }
+  btn.disabled=false;
+};
+
+async function loadModels(){
+  const {models}=await (await fetch('/api/models')).json();
+  const box=$('#models');
+  if(!models.length){ box.innerHTML='<div class="sub">None prepared yet.</div>'; return; }
+  box.innerHTML='';
+  models.forEach(m=>{
+    const row=document.createElement('div'); row.className='model-row';
+    row.innerHTML=`<span><b>${m.dataset}</b> · ${m.arch}
+      <span class="pill">${m.task}</span>
+      <span class="pill ${m.trained?'trained':'demo'}">${m.trained?'trained':'demo'}</span></span>
+      <span class="sub">${m.input_size}px · ${m.device}</span>`;
+    box.appendChild(row);
+  });
+}
+
+$('#test').onclick=async()=>{
+  const btn=$('#test'), st=$('#testStatus'), out=$('#testOut'); btn.disabled=true;
+  st.className='status info'; st.innerHTML='<span class="spinner"></span> Running pytest…'; out.style.display='none';
+  try{
+    const r=await fetch('/api/run-tests',{method:'POST'}); const j=await r.json();
+    st.className='status '+(j.passed?'ok':'err');
+    st.textContent=j.passed?'✓ All tests passed':`✗ Tests failed (exit ${j.returncode})`;
+    out.style.display='block'; out.textContent=(j.stdout||'')+(j.stderr?'\n'+j.stderr:'');
+  }catch(e){ st.className='status err'; st.textContent='✗ '+e.message; }
+  btn.disabled=false;
+};
+loadOptions();
+</script>
+</body>
+</html>

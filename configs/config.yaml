@@ -1,0 +1,17 @@
+# Base config. Compose a run by overriding the groups below, e.g.
+#   py -m occuwise.train model=resnet50 data=aptos
+defaults:
+  - model: resnet50
+  - data: aptos
+  - train: default
+  - _self_
+
+seed: 42
+tracking_uri: ./mlruns          # MLflow store (file-based; point to a server in prod)
+
+hydra:
+  run:
+    dir: outputs/${data.dataset}/${model.arch}/${now:%Y-%m-%d_%H-%M-%S}
+  sweep:
+    dir: outputs/sweeps/${now:%Y-%m-%d_%H-%M-%S}
+    subdir: ${data.dataset}__${model.arch}

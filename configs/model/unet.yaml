@@ -1,0 +1,4 @@
+# U-Net segmentation. `arch` selects the ENCODER; `decoder` selects the head.
+arch: resnet34         # encoder backbone
+decoder: unet          # unet | unetpp | fpn | segformer
+pretrained: true

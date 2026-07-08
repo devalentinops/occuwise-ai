@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Occuwise · Analyze</title>
+<style>
+  :root{
+    --bg:#0f1720; --panel:#182430; --panel2:#1f2e3d; --line:#2c3e50;
+    --text:#e8eef5; --muted:#93a4b8; --accent:#38bdf8; --accent2:#22c55e;
+    --warn:#f59e0b; --danger:#ef4444; --radius:14px;
+  }
+  @media (prefers-color-scheme: light){
+    :root{--bg:#f4f7fb;--panel:#fff;--panel2:#eef3f9;--line:#dbe4ee;
+      --text:#12202e;--muted:#5b6b7c;}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.5}
+  header{display:flex;align-items:center;gap:16px;padding:16px 24px;
+    border-bottom:1px solid var(--line);background:var(--panel)}
+  header .logo{font-weight:700;font-size:18px}
+  header .logo span{color:var(--accent)}
+  nav{margin-left:auto;display:flex;gap:8px}
+  nav a{color:var(--muted);text-decoration:none;padding:8px 14px;border-radius:10px;font-size:14px}
+  nav a.active{background:var(--panel2);color:var(--text)}
+  .wrap{max-width:1000px;margin:0 auto;padding:24px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media (max-width:800px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
+  h2{margin:0 0 14px;font-size:16px}
+  label{display:block;font-size:13px;color:var(--muted);margin:12px 0 6px}
+  select,input[type=text]{width:100%;padding:10px 12px;background:var(--panel2);
+    border:1px solid var(--line);border-radius:10px;color:var(--text);font-size:14px}
+  button{cursor:pointer;border:0;border-radius:10px;padding:11px 18px;font-size:14px;
+    font-weight:600;background:var(--accent);color:#04222e}
+  button.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  #drop{margin-top:14px;border:2px dashed var(--line);border-radius:12px;padding:26px;
+    text-align:center;color:var(--muted);cursor:pointer;transition:.15s}
+  #drop.hover{border-color:var(--accent);color:var(--text)}
+  #preview{max-width:100%;max-height:320px;border-radius:10px;margin-top:14px;display:none}
+  .banner{background:color-mix(in srgb,var(--warn) 18%,transparent);
+    border:1px solid var(--warn);color:var(--text);padding:10px 14px;border-radius:10px;
+    font-size:13px;margin-bottom:16px}
+  .result-empty{color:var(--muted);text-align:center;padding:40px 0}
+  .verdict{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
+  .verdict .cls{font-size:24px;font-weight:700}
+  .verdict .conf{color:var(--muted);font-size:14px}
+  .bar{margin:8px 0}
+  .bar .row{display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px}
+  .bar .track{height:8px;background:var(--panel2);border-radius:6px;overflow:hidden}
+  .bar .fill{height:100%;background:var(--accent);border-radius:6px}
+  .bar.top .fill{background:var(--accent2)}
+  .pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;
+    background:var(--panel2);color:var(--muted);margin-left:6px}
+  .demo{color:var(--warn)}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+  td{padding:4px 0;border-bottom:1px solid var(--line)}
+  td:last-child{text-align:right;color:var(--muted)}
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--line);
+    border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+  .gallery figure{margin:0;cursor:pointer;border:1px solid var(--line);border-radius:10px;
+    overflow:hidden;background:var(--panel2);transition:.15s}
+  .gallery figure:hover{border-color:var(--accent)}
+  .gallery img{width:100%;height:66px;object-fit:cover;display:block}
+  .gallery figcaption{font-size:10px;color:var(--muted);padding:4px 6px;line-height:1.3}
+  code{background:var(--panel2);padding:1px 5px;border-radius:5px;font-size:11px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">Occu<span>wise</span> AI</div>
+  <nav>
+    <a href="/" class="active">Analyze</a>
+    <a href="/prepare">Prepare &amp; Test</a>
+  </nav>
+</header>
+
+<div class="wrap">
+  <div class="banner">⚕️ Clinical <b>decision support only</b> — not a diagnosis. For research / POC use.</div>
+  <div class="grid">
+    <!-- LEFT: input -->
+    <div class="card">
+      <h2>1 · Choose a model & image</h2>
+      <label for="model">Prepared model</label>
+      <select id="model"></select>
+      <div id="noModel" style="display:none;font-size:13px;margin-top:8px">
+        No models prepared yet. <a href="/prepare" style="color:var(--accent)">Prepare one →</a>
+      </div>
+
+      <div id="drop">
+        <div id="dropText">📤 Drop an OCT / fundus image here, or click to browse</div>
+        <img id="preview" alt="preview">
+      </div>
+      <input type="file" id="file" accept="image/*" style="display:none">
+
+      <div style="margin-top:16px;display:flex;gap:10px">
+        <button id="run" disabled>Analyze image</button>
+        <button class="secondary" id="clear">Clear</button>
+      </div>
+
+      <div id="samplesWrap" style="margin-top:20px;display:none">
+        <label>Or click a bundled test image (runs the selected model)</label>
+        <div id="samples" class="gallery"></div>
+      </div>
+      <div id="noSamples" style="display:none;font-size:12px;color:var(--muted);margin-top:14px">
+        No sample images yet — run <code>py scripts/fetch_samples.py</code> to download some.
+      </div>
+    </div>
+
+    <!-- RIGHT: result -->
+    <div class="card">
+      <h2>2 · Structured result</h2>
+      <div id="result"><div class="result-empty">Results appear here after analysis.</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+let selectedFile = null;
+
+async function loadModels(){
+  const r = await fetch('/api/models'); const {models} = await r.json();
+  const sel = $('#model'); sel.innerHTML='';
+  if(!models.length){ $('#noModel').style.display='block'; $('#run').disabled=true; return; }
+  $('#noModel').style.display='none';
+  for(const m of models){
+    const o=document.createElement('option'); o.value=m.key;
+    o.textContent=`${m.dataset} · ${m.arch} (${m.task}${m.trained?'':' · demo'})`;
+    sel.appendChild(o);
+  }
+  updateRun();
+}
+function updateRun(){ $('#run').disabled = !(selectedFile && $('#model').value); }
+
+const drop=$('#drop'), fileInput=$('#file');
+drop.onclick=()=>fileInput.click();
+['dragover','dragenter'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.add('hover')}));
+['dragleave','drop'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.remove('hover')}));
+drop.addEventListener('drop',ev=>setFile(ev.dataTransfer.files[0]));
+fileInput.onchange=()=>setFile(fileInput.files[0]);
+function setFile(f){
+  if(!f) return; selectedFile=f;
+  const img=$('#preview'); img.src=URL.createObjectURL(f); img.style.display='block';
+  $('#dropText').style.display='none'; updateRun();
+}
+$('#clear').onclick=()=>{selectedFile=null;$('#preview').style.display='none';
+  $('#dropText').style.display='block';fileInput.value='';
+  $('#result').innerHTML='<div class="result-empty">Results appear here after analysis.</div>';updateRun();};
+$('#model').onchange=updateRun;
+
+$('#run').onclick=async()=>{
+  if(!selectedFile) return;
+  $('#result').innerHTML='<div class="result-empty"><span class="spinner"></span> Running inference…</div>';
+  const fd=new FormData(); fd.append('file',selectedFile); fd.append('model_key',$('#model').value);
+  const r=await fetch('/api/predict',{method:'POST',body:fd});
+  if(!r.ok){ const e=await r.json(); $('#result').innerHTML=`<div class="banner">${e.detail||'Error'}</div>`; return; }
+  render(await r.json());
+};
+
+async function loadSamples(){
+  const {samples}=await (await fetch('/api/samples')).json();
+  if(!samples.length){ $('#noSamples').style.display='block'; return; }
+  $('#samplesWrap').style.display='block';
+  const box=$('#samples'); box.innerHTML='';
+  samples.forEach(s=>{
+    const fig=document.createElement('figure');
+    fig.innerHTML=`<img src="/samples/${s.path}" alt="${s.label_hint}">
+      <figcaption>${s.modality} · ${s.label_hint}</figcaption>`;
+    fig.onclick=()=>runSample(s);
+    box.appendChild(fig);
+  });
+}
+async function runSample(s){
+  const key=$('#model').value;
+  if(!key){ alert('Prepare and select a model first (see Prepare & Test).'); return; }
+  // Show the chosen sample in the preview area.
+  const img=$('#preview'); img.src='/samples/'+s.path; img.style.display='block';
+  $('#dropText').style.display='none'; selectedFile=null;
+  $('#result').innerHTML='<div class="result-empty"><span class="spinner"></span> Running inference…</div>';
+  const r=await fetch('/api/predict_sample',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model_key:key,path:s.path})});
+  if(!r.ok){ const e=await r.json(); $('#result').innerHTML=`<div class="banner">${e.detail||'Error'}</div>`; return; }
+  render(await r.json());
+}
+
+function render(d){
+  let h='';
+  const demo = d.trained ? '' : '<span class="pill demo">untrained demo</span>';
+  if(d.task==='classification'){
+    h+=`<div class="verdict"><span class="cls">${d.predicted_class}</span>
+        <span class="conf">${(d.confidence*100).toFixed(1)}% confidence</span>${demo}</div>`;
+    d.probabilities.forEach((p,i)=>{
+      h+=`<div class="bar ${i===0?'top':''}"><div class="row"><span>${p.class}</span>
+          <span>${(p.prob*100).toFixed(1)}%</span></div>
+          <div class="track"><div class="fill" style="width:${(p.prob*100).toFixed(1)}%"></div></div></div>`;
+    });
+  } else {
+    h+=`<div class="verdict"><span class="cls">Segmentation</span>${demo}</div>`;
+    if(d.overlay_png) h+=`<img src="${d.overlay_png}" style="max-width:100%;border-radius:10px;margin:8px 0">`;
+    if(d.cup_to_disc_ratio!=null)
+      h+=`<div class="banner" style="background:var(--panel2);border-color:var(--line)">
+          Cup-to-disc ratio (CDR): <b>${d.cup_to_disc_ratio.toFixed(3)}</b></div>`;
+    h+='<table>';
+    for(const [k,v] of Object.entries(d.class_area_fraction))
+      h+=`<tr><td>${k}</td><td>${(v*100).toFixed(1)}% of pixels</td></tr>`;
+    h+='</table>';
+  }
+  h+=`<table style="margin-top:14px"><tr><td>Model</td><td>${d.model}</td></tr>
+      <tr><td>Dataset</td><td>${d.dataset}</td></tr>
+      <tr><td>Modality</td><td>${d.modality}</td></tr>
+      <tr><td>File</td><td>${d.filename||''}</td></tr></table>
+      <div style="font-size:12px;color:var(--muted);margin-top:12px">${d.disclaimer}</div>`;
+  $('#result').innerHTML=h;
+}
+loadModels();
+loadSamples();
+</script>
+</body>
+</html>

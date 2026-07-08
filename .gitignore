@@ -1,0 +1,31 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+
+# ---- Data & artifacts (never commit patient/medical imagery) ----
+data/
+!data/README.md
+experiments/
+outputs/
+mlruns/
+mlartifacts/
+wandb/
+lightning_logs/
+*.ckpt
+*.pth
+*.onnx
+*.pt
+*.engine
+
+# ---- Notebooks ----
+.ipynb_checkpoints/
+
+# ---- OS / editor ----
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "occuwise"
+version = "0.1.0"
+description = "Ophthalmology CNN benchmark & production toolkit (Fundus / OCT) across ResNet, EfficientNet, DenseNet, U-Net, ViT."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Proprietary" }
+authors = [{ name = "Occuwise AI" }]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.scripts]
+occuwise = "occuwise.cli:main"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
