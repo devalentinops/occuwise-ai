@@ -6,9 +6,12 @@ __pycache__/
 venv/
 .env
 
+# ---- Credentials (never commit API keys) ----
+kaggle.json
+
 # ---- Data & artifacts (never commit patient/medical imagery) ----
-data/
-!data/README.md
+/data/*
+!/data/README.md
 experiments/
 outputs/
 mlruns/
