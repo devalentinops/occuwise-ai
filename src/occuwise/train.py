@@ -60,7 +60,19 @@ def main(cfg: DictConfig) -> float:
         max_epochs=cfg.train.max_epochs,
     )
     if spec.task == "classification":
-        common.update(task_modality=spec.modality, loss=cfg.train.get("loss", "ce"))
+        common.update(
+            task_modality=spec.modality,
+            loss=cfg.train.get("loss", "ce"),
+            # Domain-pretrained backbone weights (e.g. RETFound), optional.
+            weights_repo=cfg.model.get("weights_repo"),
+            weights_file=cfg.model.get("weights_file"),
+            weights_key=cfg.model.get("weights_key"),
+            # Discriminative fine-tuning knobs (model config wins, else train default).
+            backbone_lr_scale=cfg.model.get("backbone_lr_scale",
+                                            cfg.train.get("backbone_lr_scale", 1.0)),
+            freeze_backbone=cfg.model.get("freeze_backbone",
+                                          cfg.train.get("freeze_backbone", False)),
+        )
     else:
         common.update(decoder=cfg.model.get("decoder", "unet"))
 

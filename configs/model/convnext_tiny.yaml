@@ -1,0 +1,4 @@
+# ConvNeXt-Tiny: modern CNN, ImageNet-pretrained. Strong accuracy/compute trade-off,
+# competitive with EfficientNet-B4 while remaining a pure conv net (clean Grad-CAM).
+arch: convnext_tiny
+pretrained: true

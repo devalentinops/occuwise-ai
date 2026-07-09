@@ -23,13 +23,22 @@ class LitClassifier(pl.LightningModule):
         weight_decay: float = 1e-4,
         max_epochs: int = 50,
         warmup_epochs: int = 2,
+        weights_repo: str | None = None,
+        weights_file: str | None = None,
+        weights_key: str | None = None,
+        backbone_lr_scale: float = 1.0,
+        freeze_backbone: bool = False,
     ):
         super().__init__()
         self.save_hyperparameters()
         self.model = build_model(
             ModelConfig(task="classification", arch=arch, num_classes=num_classes,
-                        pretrained=pretrained)
+                        pretrained=pretrained, weights_repo=weights_repo,
+                        weights_file=weights_file, weights_key=weights_key)
         )
+        if freeze_backbone:
+            for p in self._backbone_params():
+                p.requires_grad_(False)
         self.criterion = build_classification_loss(loss, num_classes)
         self.train_metrics = classification_metrics(num_classes, prefix="train/")
         self.val_metrics = classification_metrics(num_classes, prefix="val/")
@@ -67,8 +76,25 @@ class LitClassifier(pl.LightningModule):
     def on_test_epoch_end(self):
         self.log_dict(self.test_metrics.compute()); self.test_metrics.reset()
 
+    def _head_params(self):
+        head = self.model.get_classifier() if hasattr(self.model, "get_classifier") else None
+        return list(head.parameters()) if head is not None else []
+
+    def _backbone_params(self):
+        head_ids = {id(p) for p in self._head_params()}
+        return [p for p in self.model.parameters() if id(p) not in head_ids]
+
     def configure_optimizers(self):
-        opt = torch.optim.AdamW(self.parameters(), lr=self.hparams.lr,
-                                weight_decay=self.hparams.weight_decay)
+        lr, scale = self.hparams.lr, self.hparams.backbone_lr_scale
+        head_ids = {id(p) for p in self._head_params()}
+        # Discriminative fine-tuning: the fresh head trains at `lr`; the pretrained
+        # backbone at `lr * backbone_lr_scale` (set <1 for foundation models on small
+        # datasets to adapt features gently and curb overfitting). Frozen params drop out.
+        head = [p for p in self.model.parameters() if id(p) in head_ids and p.requires_grad]
+        backbone = [p for p in self.model.parameters() if id(p) not in head_ids and p.requires_grad]
+        groups = [{"params": head, "lr": lr}]
+        if backbone:
+            groups.append({"params": backbone, "lr": lr * scale})
+        opt = torch.optim.AdamW(groups, lr=lr, weight_decay=self.hparams.weight_decay)
         sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=self.hparams.max_epochs)
         return {"optimizer": opt, "lr_scheduler": {"scheduler": sched, "interval": "epoch"}}

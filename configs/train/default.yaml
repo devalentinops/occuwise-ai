@@ -9,6 +9,12 @@ loss: ce                 # "ce" | "focal" (classification only)
 balance_classes: true    # weighted sampler for imbalanced classification
 gradient_clip_val: 1.0
 
+# Discriminative fine-tuning (classification). Defaults reproduce prior behaviour:
+# whole network trains at `lr`. Lower backbone_lr_scale (e.g. 0.1) or freeze the
+# backbone when adapting a big pretrained model (RETFound/ViT) to a small dataset.
+backbone_lr_scale: 1.0   # backbone LR = lr * this; <1 = gentler feature adaptation
+freeze_backbone: false   # true = linear-probe (backbone frozen, only the head trains)
+
 # Hardware
 accelerator: auto        # "gpu" | "cpu" | "auto"
 devices: auto            # int, list, or "auto"

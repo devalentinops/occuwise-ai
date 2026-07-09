@@ -1,0 +1,3 @@
+# Xception: multi-ocular-disease Grad-CAM baseline (depthwise-separable convolutions).
+arch: xception
+pretrained: true

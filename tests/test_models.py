@@ -9,7 +9,10 @@ import torch
 
 from occuwise.models import ModelConfig, build_model
 
-CLS_ARCHS = ["resnet18", "resnet50", "efficientnet_b0", "densenet121", "vit_base"]
+CLS_ARCHS = [
+    "resnet18", "resnet50", "efficientnet_b0", "densenet121", "vit_base",
+    "convnext_tiny", "vgg16", "xception",
+]
 
 
 @pytest.mark.parametrize("arch", CLS_ARCHS)
@@ -20,6 +23,23 @@ def test_classifier_forward(arch):
     with torch.no_grad():
         out = model(torch.randn(2, 3, size, size))
     assert out.shape == (2, 5)
+
+
+def test_discriminative_lr_and_freeze():
+    """The fine-tuning knobs used for domain-pretrained backbones (e.g. RETFound)."""
+    from occuwise.engine.lit_classifier import LitClassifier
+
+    # Discriminative LR: head at lr, backbone at lr * scale (two param groups).
+    lit = LitClassifier(arch="resnet50", num_classes=5, pretrained=False,
+                        lr=3e-4, backbone_lr_scale=0.1)
+    lrs = sorted(g["lr"] for g in lit.configure_optimizers()["optimizer"].param_groups)
+    assert lrs == pytest.approx([3e-5, 3e-4])
+
+    # Linear-probe: backbone frozen, only the head is trainable.
+    frozen = LitClassifier(arch="resnet50", num_classes=5, pretrained=False,
+                           freeze_backbone=True)
+    trainable = sum(p.requires_grad for p in frozen.model.parameters())
+    assert trainable == sum(1 for _ in frozen._head_params())
 
 
 def test_gradcam_overlay():

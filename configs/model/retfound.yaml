@@ -1,0 +1,23 @@
+# RETFound — retinal foundation model (ViT-L/16), self-supervised (MAE) on ~1.6M
+# fundus + OCT images. Domain-pretrained weights transfer far better than ImageNet
+# and are markedly more label-efficient on small clinical sets (REFUGE, Messidor, Duke).
+#
+# The backbone is a timm vit_large_patch16_224; RETFound weights are loaded into it via
+# weights_repo/weights_file (the ImageNet init is skipped). The task head is fresh.
+#
+# NOTE: confirm the repo id + filename below against the RETFound model card you intend
+# to use — there are separate CFP (fundus) and OCT checkpoints, and the maintainers have
+# published several releases. The loader reports how many tensors matched, and WARNS
+# loudly if it matched none (i.e. the backbone would be random). ~1.2 GB download.
+#
+# Fundus (colour fundus photo) checkpoint shown; swap the OCT one for OCT datasets.
+arch: retfound
+pretrained: false               # ignored for the backbone when weights_repo is set
+weights_repo: YukunZhou/RETFound_mae_natureCFP
+weights_file: RETFound_mae_natureCFP.pth
+# weights_key: model            # uncomment/adjust if the checkpoint nests its state_dict
+
+# Foundation models overfit small clinical sets if fully fine-tuned at a high LR.
+# These defaults gently adapt the backbone while training the head fast; see train/default.yaml.
+backbone_lr_scale: 0.1          # backbone LR = 0.1 x head LR (discriminative fine-tuning)
+freeze_backbone: false          # set true for a pure linear-probe (fastest, least overfit)

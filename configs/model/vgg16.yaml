@@ -1,0 +1,4 @@
+# VGG16: the recurring baseline in the explainable-fundus / Grad-CAM literature.
+# Included for like-for-like comparison; expect it to trail EfficientNet/DenseNet.
+arch: vgg16
+pretrained: true
