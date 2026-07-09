@@ -55,7 +55,8 @@ class LitClassifier(pl.LightningModule):
         # torchmetrics binary AUROC expects the positive-class score.
         preds = probs[:, 1] if probs.shape[1] == 2 else probs
         metrics.update(preds, y)
-        self.log(f"{stage}/loss", loss, prog_bar=True, on_epoch=True, on_step=stage == "train")
+        self.log(f"{stage}/loss", loss, prog_bar=True, on_epoch=True,
+                 on_step=stage == "train", sync_dist=True)
         return loss
 
     def training_step(self, batch, _):
@@ -68,13 +69,14 @@ class LitClassifier(pl.LightningModule):
         return self._step(batch, self.test_metrics, "test")
 
     def on_train_epoch_end(self):
-        self.log_dict(self.train_metrics.compute()); self.train_metrics.reset()
+        self.log_dict(self.train_metrics.compute(), sync_dist=True); self.train_metrics.reset()
 
     def on_validation_epoch_end(self):
-        self.log_dict(self.val_metrics.compute(), prog_bar=True); self.val_metrics.reset()
+        self.log_dict(self.val_metrics.compute(), prog_bar=True, sync_dist=True)
+        self.val_metrics.reset()
 
     def on_test_epoch_end(self):
-        self.log_dict(self.test_metrics.compute()); self.test_metrics.reset()
+        self.log_dict(self.test_metrics.compute(), sync_dist=True); self.test_metrics.reset()
 
     def _head_params(self):
         head = self.model.get_classifier() if hasattr(self.model, "get_classifier") else None

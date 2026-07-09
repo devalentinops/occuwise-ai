@@ -24,8 +24,12 @@ from _manifest import stratified_splits, write_manifest
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default="data/refuge")
+    ap.add_argument("--out-dir", default=None,
+                    help="Where to write the manifest CSVs (default: <root>). "
+                         "Set this when --root is read-only, e.g. Kaggle /kaggle/input.")
     args = ap.parse_args()
     root = Path(args.root)
+    out_dir = Path(args.out_dir) if args.out_dir else root
 
     df = pd.read_csv(root / "index.csv")
 
@@ -33,11 +37,11 @@ def main():
     cls = df.copy()
     cls["label"] = cls["glaucoma"].astype(int)
     cls = stratified_splits(cls, "label")
-    write_manifest(cls, root / "manifest_cls.csv", ["image_path", "label", "split"])
+    write_manifest(cls, out_dir / "manifest_cls.csv", ["image_path", "label", "split"])
 
     # Segmentation manifest (disc/cup masks). Reuse the same split assignment.
     seg = cls[["image_path", "mask_path", "split"]]
-    write_manifest(seg, root / "manifest_seg.csv", ["image_path", "mask_path", "split"])
+    write_manifest(seg, out_dir / "manifest_seg.csv", ["image_path", "mask_path", "split"])
 
 
 if __name__ == "__main__":

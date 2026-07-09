@@ -108,7 +108,7 @@ def main(cfg: DictConfig) -> float:
         deterministic=False,
         gradient_clip_val=cfg.train.get("gradient_clip_val", 1.0),
     )
-    trainer.fit(model, datamodule=dm)
+    trainer.fit(model, datamodule=dm, ckpt_path=cfg.train.get("resume"))
     test_results = trainer.test(model, datamodule=dm, ckpt_path="best")
     print("TEST:", test_results)
 

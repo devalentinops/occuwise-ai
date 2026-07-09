@@ -37,7 +37,7 @@ class LitSegmenter(pl.LightningModule):
     def training_step(self, batch, _):
         x, y = batch
         loss = self.criterion(self(x), y)
-        self.log("train/loss", loss, prog_bar=True, on_epoch=True, on_step=True)
+        self.log("train/loss", loss, prog_bar=True, on_epoch=True, on_step=True, sync_dist=True)
         return loss
 
     def _eval_step(self, batch, metrics, stage):
@@ -45,7 +45,7 @@ class LitSegmenter(pl.LightningModule):
         logits = self(x)
         loss = self.criterion(logits, y)
         metrics.update(logits.argmax(1), y)
-        self.log(f"{stage}/loss", loss, prog_bar=True, on_epoch=True)
+        self.log(f"{stage}/loss", loss, prog_bar=True, on_epoch=True, sync_dist=True)
         return loss
 
     def validation_step(self, batch, _):
@@ -55,10 +55,11 @@ class LitSegmenter(pl.LightningModule):
         return self._eval_step(batch, self.test_metrics, "test")
 
     def on_validation_epoch_end(self):
-        self.log_dict(self.val_metrics.compute(), prog_bar=True); self.val_metrics.reset()
+        self.log_dict(self.val_metrics.compute(), prog_bar=True, sync_dist=True)
+        self.val_metrics.reset()
 
     def on_test_epoch_end(self):
-        self.log_dict(self.test_metrics.compute()); self.test_metrics.reset()
+        self.log_dict(self.test_metrics.compute(), sync_dist=True); self.test_metrics.reset()
 
     def configure_optimizers(self):
         opt = torch.optim.AdamW(self.parameters(), lr=self.hparams.lr,

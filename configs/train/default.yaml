@@ -8,6 +8,7 @@ weight_decay: 1e-4
 loss: ce                 # "ce" | "focal" (classification only)
 balance_classes: true    # weighted sampler for imbalanced classification
 gradient_clip_val: 1.0
+resume: null             # checkpoint path to resume from (e.g. outputs/aptos/resnet50/last.ckpt)
 
 # Discriminative fine-tuning (classification). Defaults reproduce prior behaviour:
 # whole network trains at `lr`. Lower backbone_lr_scale (e.g. 0.1) or freeze the

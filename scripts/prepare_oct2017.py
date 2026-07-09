@@ -35,8 +35,12 @@ def _scan(split_dir: Path, root: Path) -> pd.DataFrame:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default="data/oct2017")
+    ap.add_argument("--manifest", default=None,
+                    help="Where to write the manifest CSV (default: <root>/manifest.csv). "
+                         "Set this when --root is read-only, e.g. Kaggle /kaggle/input.")
     args = ap.parse_args()
     root = Path(args.root)
+    manifest = Path(args.manifest) if args.manifest else root / "manifest.csv"
     base = root / "OCT2017"
 
     train = _scan(base / "train", root)
@@ -44,7 +48,7 @@ def main():
     train, val = train_test_split(train, test_size=0.1, stratify=train["label"], random_state=42)
     train["split"], val["split"], test["split"] = "train", "val", "test"
     df = pd.concat([train, val, test], ignore_index=True)
-    write_manifest(df, root / "manifest.csv", ["image_path", "label", "split"])
+    write_manifest(df, manifest, ["image_path", "label", "split"])
 
 
 if __name__ == "__main__":

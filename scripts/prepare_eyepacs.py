@@ -21,15 +21,19 @@ from _manifest import stratified_splits, write_manifest
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default="data/eyepacs")
+    ap.add_argument("--manifest", default=None,
+                    help="Where to write the manifest CSV (default: <root>/manifest.csv). "
+                         "Set this when --root is read-only, e.g. Kaggle /kaggle/input.")
     args = ap.parse_args()
     root = Path(args.root)
+    manifest = Path(args.manifest) if args.manifest else root / "manifest.csv"
 
     df = pd.read_csv(root / "trainLabels.csv")
     df["image_path"] = df["image"].apply(lambda i: f"train/{i}.jpeg")
     df["label"] = df["level"].astype(int)
     df = df[df["image_path"].apply(lambda p: (root / p).exists())].reset_index(drop=True)
     df = stratified_splits(df, "label")
-    write_manifest(df, root / "manifest.csv", ["image_path", "label", "split"])
+    write_manifest(df, manifest, ["image_path", "label", "split"])
 
 
 if __name__ == "__main__":
