@@ -1,0 +1,4 @@
+dataset: duke_oct
+data_root: data/duke_oct
+manifest: data/duke_oct/manifest.csv
+image_size: 512

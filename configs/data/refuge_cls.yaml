@@ -1,0 +1,4 @@
+dataset: refuge_cls
+data_root: data/refuge
+manifest: data/refuge/manifest_cls.csv
+image_size: 512

@@ -1,0 +1,4 @@
+dataset: eyepacs
+data_root: data/eyepacs
+manifest: data/eyepacs/manifest.csv
+image_size: 512

@@ -1,0 +1,4 @@
+dataset: aptos
+data_root: data/aptos
+manifest: data/aptos/manifest.csv
+image_size: 512

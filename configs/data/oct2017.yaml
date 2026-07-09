@@ -1,0 +1,4 @@
+dataset: oct2017
+data_root: data/oct2017
+manifest: data/oct2017/manifest.csv
+image_size: 224

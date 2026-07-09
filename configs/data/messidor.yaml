@@ -1,0 +1,4 @@
+dataset: messidor
+data_root: data/messidor
+manifest: data/messidor/manifest.csv
+image_size: 512
