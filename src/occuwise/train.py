@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import hydra
 import pytorch_lightning as pl
+import torch
 from omegaconf import DictConfig, OmegaConf
 from pytorch_lightning.callbacks import (
     EarlyStopping,
@@ -27,6 +28,12 @@ from pytorch_lightning.loggers import CSVLogger, MLFlowLogger
 
 from .data import OphthalmologyDataModule, get_spec
 from .engine import build_lit_module
+
+# DDP keeps AccumulateGrad nodes alive across iterations, which trips a benign
+# stream-mismatch warning on PyTorch >= 2.8 (multi-GPU only). Correctness is
+# unaffected and the mismatch is outside our control (Lightning DDP init).
+if hasattr(torch.autograd.graph, "set_warn_on_accumulate_grad_stream_mismatch"):
+    torch.autograd.graph.set_warn_on_accumulate_grad_stream_mismatch(False)
 
 
 def _monitor_for(metric: str) -> tuple[str, str]:

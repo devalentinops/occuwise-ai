@@ -5,12 +5,13 @@
 # The backbone is a timm vit_large_patch16_224; RETFound weights are loaded into it via
 # weights_repo/weights_file (the ImageNet init is skipped). The task head is fresh.
 #
-# NOTE: confirm the repo id + filename below against the RETFound model card you intend
-# to use — there are separate CFP (fundus) and OCT checkpoints, and the maintainers have
-# published several releases. The loader reports how many tensors matched, and WARNS
-# loudly if it matched none (i.e. the backbone would be random). ~1.2 GB download.
+# The repo id + filename below are the fundus (CFP) checkpoint. Access is GATED:
+# request it on the model page and `huggingface-cli login` before first use. The loader
+# reports how many tensors matched and WARNS loudly if it matched none (backbone would
+# be random). ~1.2 GB download. Use configs/model/retfound_oct.yaml for OCT datasets.
 #
-# Fundus (colour fundus photo) checkpoint shown; swap the OCT one for OCT datasets.
+# Native resolution is 224px (fastest, on-distribution); the backbone also runs at other
+# sizes via runtime pos-embed interpolation, so it won't crash on the 512px data configs.
 arch: retfound
 pretrained: false               # ignored for the backbone when weights_repo is set
 weights_repo: YukunZhou/RETFound_mae_natureCFP

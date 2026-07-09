@@ -1,0 +1,11 @@
+# RETFound — OCT foundation model (ViT-L/16). Same backbone as the CFP variant but
+# pretrained on OCT B-scans; use this one for OCT datasets (OCT2017, Duke). Gated on
+# Hugging Face — request access and `huggingface-cli login` first (see retfound.yaml).
+arch: retfound
+pretrained: false
+weights_repo: YukunZhou/RETFound_mae_natureOCT
+weights_file: RETFound_mae_natureOCT.pth
+# weights_key: model            # uncomment/adjust if the checkpoint nests its state_dict
+
+backbone_lr_scale: 0.1
+freeze_backbone: false

@@ -1,0 +1,19 @@
+# @package _global_
+# RETFound (fundus/CFP foundation model) fine-tuned on APTOS DR grading.
+# One-command run:  py -m occuwise.train +experiment=retfound_cfp
+#
+# Requires HF access to the gated weights first (see configs/model/retfound.yaml).
+# RETFound is a ViT-L/16 pretrained at 224px; we run at 224 (native grid — fastest,
+# on-distribution). The backbone adapts gently (lr x0.1) to curb overfitting on the
+# small DR set; switch data=eyepacs for the large set where a full fine-tune is safe.
+defaults:
+  - override /model: retfound
+  - override /data: aptos
+  - override /train: default
+
+data:
+  image_size: 224
+
+train:
+  batch_size: 12          # ViT-L is memory-heavy; drop further if you OOM
+  max_epochs: 50

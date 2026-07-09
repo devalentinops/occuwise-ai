@@ -1,0 +1,18 @@
+# @package _global_
+# RETFound (OCT foundation model) fine-tuned on OCT2017 disease classification.
+# One-command run:  py -m occuwise.train +experiment=retfound_oct
+#
+# Uses the OCT-pretrained weights (see configs/model/retfound_oct.yaml). OCT2017 is
+# large, so a full fine-tune is reasonable — but the discriminative-LR default is a
+# safe starting point. Run at RETFound's native 224px.
+defaults:
+  - override /model: retfound_oct
+  - override /data: oct2017
+  - override /train: default
+
+data:
+  image_size: 224
+
+train:
+  batch_size: 12
+  max_epochs: 50

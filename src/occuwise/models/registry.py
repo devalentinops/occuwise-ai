@@ -120,12 +120,19 @@ def _load_backbone_weights(model: nn.Module, cfg: ModelConfig) -> None:
 def build_classifier(cfg: ModelConfig) -> nn.Module:
     name = CLASSIFICATION_ARCHS.get(cfg.arch, cfg.arch)
     custom = bool(cfg.weights_repo)
+    extra = {}
+    # ViT positional embeddings are tied to a fixed grid (RETFound = 224px). Enabling
+    # dynamic_img_size makes timm interpolate them at runtime, so the model runs at
+    # whatever image_size a dataset uses (e.g. our 512px fundus) instead of crashing.
+    if "vit" in name:
+        extra["dynamic_img_size"] = True
     model = timm.create_model(
         name,
         pretrained=cfg.pretrained and not custom,  # don't fetch ImageNet if loading domain weights
         num_classes=cfg.num_classes,
         in_chans=cfg.in_channels,
         drop_rate=cfg.drop_rate,
+        **extra,
     )
     if custom:
         _load_backbone_weights(model, cfg)
