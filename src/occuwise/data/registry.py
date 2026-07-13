@@ -59,6 +59,13 @@ DATASETS: dict[str, DatasetSpec] = {
         primary_metric="quadratic_kappa", image_size=224,
         description="EyePACS+APTOS+Messidor merged DR grading (~92k fundus, 224px, 5-class ICDR).",
     ),
+    "idrid": DatasetSpec(
+        name="idrid", task="classification", modality="fundus", num_classes=5,
+        class_names=["No DR", "Mild", "Moderate", "Severe", "Proliferative"],
+        primary_metric="quadratic_kappa", image_size=224,
+        description="IDRiD Disease Grading (516 fundus, ICDR 0-4). Held-out EXTERNAL-validation "
+                    "set — not in combined_dr, so it gives an honest generalisation number.",
+    ),
     # ---------------------------- OCT disease classification --------------------------
     "oct2017": DatasetSpec(
         name="oct2017", task="classification", modality="oct", num_classes=4,

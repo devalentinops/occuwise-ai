@@ -1,0 +1,23 @@
+# @package _global_
+# RETFound fine-tuned on the merged EyePACS+APTOS+Messidor DR set (~92k, 224px).
+# One-command run:  py -m occuwise.train +experiment=retfound_combined
+#
+# The biggest, most diverse DR training set here — best single production model.
+# Requires HF access to the gated RETFound weights (see configs/model/retfound.yaml)
+# and the Kaggle dataset mounted (see configs/data/combined_dr.yaml).
+# Build the manifest first:  py scripts/prepare_combined_dr.py --root <mount> --manifest /kaggle/working/combined_dr_manifest.csv
+defaults:
+  - override /model: retfound
+  - override /data: combined_dr
+  - override /train: default
+
+data:
+  image_size: 224          # native RETFound grid; dataset is already 224px
+
+model:
+  backbone_lr_scale: 0.5   # large data -> fine-tune the backbone harder than the 0.1 default
+
+train:
+  batch_size: 16           # ViT-L; drop to 8 if you OOM, raise to 32 on an A100
+  max_epochs: 30           # big data converges in fewer epochs; early-stopping guards it
+  loss: focal              # EyePACS-heavy mix is very imbalanced -> focal helps kappa

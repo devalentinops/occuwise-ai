@@ -1,0 +1,4 @@
+dataset: idrid
+data_root: /kaggle/input/idrid-dataset
+manifest: /kaggle/working/idrid_manifest.csv
+image_size: 224

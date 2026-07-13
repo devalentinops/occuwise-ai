@@ -16,6 +16,7 @@ manifest CSV that the training pipeline consumes.
 | APTOS 2019 | DR grading | fundus | 5 (0–4) | [Kaggle APTOS](https://www.kaggle.com/c/aptos2019-blindness-detection/data) | `prepare_aptos.py` |
 | Messidor / -2 | DR grading | fundus | 4 (0–3) | [ADCIS Messidor](https://www.adcis.net/en/third-party/messidor/) | `prepare_messidor.py` |
 | Combined DR (EyePACS+APTOS+Messidor) | DR grading | fundus | 5 (0–4) | [Kaggle ascanipek](https://www.kaggle.com/datasets/ascanipek/eyepacs-aptos-messidor-diabetic-retinopathy) (~92k, 224px) | `prepare_combined_dr.py` |
+| IDRiD (external validation) | DR grading | fundus | 5 (0–4) | [Kaggle mariaherrerot](https://www.kaggle.com/datasets/mariaherrerot/idrid-dataset) (516 imgs) | `prepare_idrid.py` (all-test) |
 | OCT2017 (Kermany) | Disease cls | OCT | 4 (CNV/DME/DRUSEN/NORMAL) | [Mendeley](https://data.mendeley.com/datasets/rscbjbr9sj) | `prepare_oct2017.py` |
 | REFUGE | Glaucoma cls **+** disc/cup seg | fundus | 2 / 3 | [Grand Challenge](https://refuge.grand-challenge.org/) | `prepare_refuge.py` |
 | Duke OCT (DME) | Layer/fluid seg | OCT | 2+ | [Duke / Chiu 2015](http://people.duke.edu/~sf59/Chiu_BOE_2014_dataset.htm) | `prepare_duke_oct.py` |

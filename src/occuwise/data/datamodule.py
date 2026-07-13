@@ -44,6 +44,29 @@ class OphthalmologyDataModule(pl.LightningDataModule):
         self.train_ds = self._ds_cls(self.manifest, self.data_root, "train", self._tf(True))
         self.val_ds = self._ds_cls(self.manifest, self.data_root, "val", self._tf(False))
         self.test_ds = self._ds_cls(self.manifest, self.data_root, "test", self._tf(False))
+        for split, ds in (("train", self.train_ds), ("val", self.val_ds), ("test", self.test_ds)):
+            self._check_paths(split, ds)
+
+    def _check_paths(self, split: str, ds, sample: int = 25) -> None:
+        """Fail fast (with a fix hint) if manifest paths don't resolve under data_root.
+
+        Catches the classic mistake of prepare's --root != train's data.data_root,
+        which otherwise surfaces as a storm of OpenCV 'can't open/read file' warnings.
+        """
+        n = min(len(ds.df), sample)
+        if n == 0:
+            return
+        rels = ds.df["image_path"].iloc[:n]
+        missing = [r for r in rels if not (self.data_root / r).exists()]
+        if len(missing) == n:
+            example = self.data_root / rels.iloc[0]
+            raise FileNotFoundError(
+                f"None of the first {n} '{split}' images exist under "
+                f"data_root={self.data_root}.\n  tried: {example}\n"
+                f"The manifest stores paths RELATIVE to the --root you passed to the "
+                f"prepare script, so data.data_root must be that SAME path. "
+                f"Set data.data_root=<that root> on the train/evaluate command."
+            )
 
     def _train_sampler(self):
         if not (self.balance_classes and self.spec.task == "classification"):
