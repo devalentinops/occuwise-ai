@@ -53,6 +53,12 @@ DATASETS: dict[str, DatasetSpec] = {
         primary_metric="quadratic_kappa", image_size=512,
         description="Messidor / Messidor-2 DR grading (retinopathy grade 0..3).",
     ),
+    "combined_dr": DatasetSpec(
+        name="combined_dr", task="classification", modality="fundus", num_classes=5,
+        class_names=["No DR", "Mild", "Moderate", "Severe", "Proliferative"],
+        primary_metric="quadratic_kappa", image_size=224,
+        description="EyePACS+APTOS+Messidor merged DR grading (~92k fundus, 224px, 5-class ICDR).",
+    ),
     # ---------------------------- OCT disease classification --------------------------
     "oct2017": DatasetSpec(
         name="oct2017", task="classification", modality="oct", num_classes=4,
