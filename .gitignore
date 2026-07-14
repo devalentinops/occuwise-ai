@@ -32,3 +32,5 @@ lightning_logs/
 Thumbs.db
 .idea/
 .vscode/
+
+hftoken

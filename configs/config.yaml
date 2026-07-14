@@ -8,6 +8,7 @@ defaults:
 
 seed: 42
 tracking_uri: ./mlruns          # MLflow store (file-based; point to a server in prod)
+ckpt: null                      # checkpoint path for `occuwise evaluate` (e.g. ckpt=models/aptos/resnet50/best.ckpt)
 
 hydra:
   run:

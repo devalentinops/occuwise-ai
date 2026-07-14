@@ -16,14 +16,15 @@ import numpy as np
 import torch
 
 from .data.registry import get_spec
-from .engine import LitClassifier, LitSegmenter
+from .engine import load_trained_module
 
 
 def load_model(ckpt: str, task: str):
-    cls = LitClassifier if task == "classification" else LitSegmenter
-    model = cls.load_from_checkpoint(ckpt, map_location="cpu")
-    model.eval()
-    return model
+    # Load trained weights without re-fetching (possibly gated) pretrained backbones,
+    # then return the underlying nn.Module. Tracing/exporting the LightningModule wrapper
+    # trips torch.jit's attribute introspection on its `.trainer` property.
+    module = load_trained_module(ckpt, task, map_location="cpu")
+    return module.model
 
 
 def main():
@@ -60,6 +61,7 @@ def main():
             input_names=["input"], output_names=["output"],
             dynamic_axes={"input": {0: "batch"}, "output": {0: "batch"}},
             opset_version=args.opset,
+            dynamo=False,  # legacy TorchScript exporter (no onnxscript dependency)
         )
         # Parity check.
         import onnxruntime as ort

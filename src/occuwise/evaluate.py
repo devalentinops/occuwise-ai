@@ -10,7 +10,7 @@ import pytorch_lightning as pl
 from omegaconf import DictConfig
 
 from .data import OphthalmologyDataModule, get_spec
-from .engine import LitClassifier, LitSegmenter
+from .engine import load_trained_module
 
 
 @hydra.main(version_base=None, config_path="../../configs", config_name="config")
@@ -24,8 +24,8 @@ def main(cfg: DictConfig):
         batch_size=cfg.train.batch_size,
         num_workers=cfg.train.num_workers,
     )
-    cls = LitClassifier if spec.task == "classification" else LitSegmenter
-    model = cls.load_from_checkpoint(cfg.ckpt)
+    # Loads the trained weights without re-fetching (possibly gated) pretrained backbones.
+    model = load_trained_module(cfg.ckpt, spec.task)
     trainer = pl.Trainer(accelerator=cfg.train.accelerator, devices=1,
                          precision=cfg.train.precision, logger=False)
     results = trainer.test(model, datamodule=dm)
