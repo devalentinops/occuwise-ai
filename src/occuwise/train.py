@@ -106,6 +106,9 @@ def main(cfg: DictConfig) -> float:
 
     trainer = pl.Trainer(
         max_epochs=cfg.train.max_epochs,
+        # Stop gracefully before a session wall-clock limit (e.g. Kaggle's 12h cap),
+        # leaving last.ckpt/best.ckpt intact so the run can be resumed next session.
+        max_time=cfg.train.get("max_time"),
         accelerator=cfg.train.accelerator,
         devices=cfg.train.devices,
         precision=cfg.train.precision,
@@ -114,6 +117,8 @@ def main(cfg: DictConfig) -> float:
         log_every_n_steps=10,
         deterministic=False,
         gradient_clip_val=cfg.train.get("gradient_clip_val", 1.0),
+        check_val_every_n_epoch=cfg.train.get("check_val_every_n_epoch", 1),
+        limit_val_batches=cfg.train.get("limit_val_batches", 1.0),
     )
     trainer.fit(model, datamodule=dm, ckpt_path=cfg.train.get("resume"))
     test_results = trainer.test(model, datamodule=dm, ckpt_path="best")

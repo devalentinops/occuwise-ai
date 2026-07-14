@@ -39,21 +39,29 @@ def _find_labels_csv(root: Path, override: str | None) -> Path:
         p = Path(override)
         if not p.is_absolute():
             p = root / p
-        if not p.exists():
-            raise SystemExit(f"--labels not found: {p}")
+        if not p.is_file():
+            raise SystemExit(f"--labels not found or is not a file: {p}")
         return p
-    # Prefer well-known names; fall back to any csv that has an id-like column.
+    # NOTE: some datasets contain a *directory* whose name ends in ".csv"
+    # (e.g. dreamer07/eyepacs). rglob matches those too, so we must keep only
+    # real files here — never hand a directory to pd.read_csv.
     for name in LABELS_CSV_CANDIDATES:
-        hits = sorted(root.rglob(name))
+        hits = sorted(q for q in root.rglob(name) if q.is_file())
         # Prefer the non-cropped / shallowest match.
         hits.sort(key=lambda q: ("crop" in str(q).lower(), len(q.parts)))
         if hits:
             return hits[0]
-    for csv in sorted(root.rglob("*.csv"), key=lambda q: len(q.parts)):
-        cols = pd.read_csv(csv, nrows=0).columns.str.lower()
+    for csv in sorted((q for q in root.rglob("*.csv") if q.is_file()), key=lambda q: len(q.parts)):
+        try:
+            cols = pd.read_csv(csv, nrows=0).columns.str.lower()
+        except Exception:  # noqa: BLE001 - skip anything unreadable, keep scanning
+            continue
         if any(c in cols for c in ID_COL_CANDIDATES):
             return csv
-    raise SystemExit(f"No labels CSV found under {root}. Pass --labels explicitly.")
+    raise SystemExit(
+        f"No labels CSV found under {root}. Pass --labels <file> explicitly, or — if this "
+        f"dataset stores the grade in class subfolders (0..4 / No_DR..Proliferative) rather "
+        f"than a CSV — use scripts/prepare_combined_dr.py instead.")
 
 
 def _pick_col(df: pd.DataFrame, candidates: list[str], what: str) -> str:
@@ -72,7 +80,8 @@ def _index_images(root: Path) -> dict[str, Path]:
     resized_train/ and resized_train_cropped/, or train/ and test/), prefer the
     plain (non-'crop', non-'test') and shallowest path so results are deterministic.
     """
-    files = [p for p in root.rglob("*") if p.suffix.lower() in IMAGE_EXTS]
+    # is_file() guards against directories whose names carry an image-like suffix.
+    files = [p for p in root.rglob("*") if p.suffix.lower() in IMAGE_EXTS and p.is_file()]
     files.sort(key=lambda p: ("crop" in str(p).lower(), "test" in str(p).lower(), len(p.parts)))
     index: dict[str, Path] = {}
     for p in files:

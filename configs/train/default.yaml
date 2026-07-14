@@ -10,6 +10,13 @@ balance_classes: true    # weighted sampler for imbalanced classification
 gradient_clip_val: 1.0
 resume: null             # checkpoint path to resume from (e.g. outputs/aptos/resnet50/last.ckpt)
 
+# Session/wall-clock safety (Kaggle etc.). A single Kaggle session is capped at 12h
+# REGARDLESS of remaining weekly quota — set max_time below that so training stops
+# cleanly (saving last.ckpt) instead of being killed mid-epoch. Then resume next session.
+max_time: null                 # e.g. "00:11:00:00"  (DD:HH:MM:SS); null = no limit
+check_val_every_n_epoch: 1     # raise to 2+ to validate less often (huge val splits)
+limit_val_batches: 1.0         # <1.0 validates on a fraction — big speed-up on 90k-image sets
+
 # Discriminative fine-tuning (classification). Defaults reproduce prior behaviour:
 # whole network trains at `lr`. Lower backbone_lr_scale (e.g. 0.1) or freeze the
 # backbone when adapting a big pretrained model (RETFound/ViT) to a small dataset.
