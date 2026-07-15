@@ -1,4 +1,4 @@
 dataset: combined_dr
-data_root: /kaggle/input/eyepacs-aptos-messidor-diabetic-retinopathy
+data_root: /kaggle/input/datasets/ascanipek/eyepacs-aptos-messidor-diabetic-retinopathy
 manifest: /kaggle/working/combined_dr_manifest.csv
 image_size: 224

@@ -13,7 +13,7 @@ before a long run. Manifest paths are RELATIVE to --root.
 
 Usage (Kaggle):
     py scripts/prepare_combined_dr.py \
-        --root /kaggle/input/eyepacs-aptos-messidor-diabetic-retinopathy \
+        --root /kaggle/input/datasets/ascanipek/eyepacs-aptos-messidor-diabetic-retinopathy \
         --manifest /kaggle/working/combined_dr_manifest.csv
 """
 
